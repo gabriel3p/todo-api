@@ -5,7 +5,7 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 
 import { UpdateTaskUseCase } from './use-cases/update-task.use-case';
 import { DeleteTaskUseCase } from './use-cases/delete-task.use-case';
-import { CreateTaskUseCase } from './use-cases/create-task.use.case';
+import { CreateTaskUseCase } from './use-cases/create-task.use-case';
 import { FindAllTasksUseCase } from './use-cases/find-all-tasks.use-case';
 import { FindTaskByIdUseCase } from './use-cases/find-task-by-id.use-case';
 
