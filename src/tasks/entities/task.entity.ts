@@ -1,11 +1,14 @@
+import { User } from "src/users/entities/user.entity";
+
 export class Task {
-    id: string;
-
+    id: number;
     title: string;
-
     description: string;
-
-    completed: boolean;
-
+    completed: string;
     createdAt: Date;
+    updatedAt: Date;
+    ownerId: number;
+    owner: User;
+    taskTypeId: number;
+    taskType: any
 }

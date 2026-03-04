@@ -9,8 +9,9 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider      = "prisma-client"
+  output        = "../generated/prisma"
+  moduleFormat = "cjs"
 }
 
 model User { 
@@ -36,9 +37,9 @@ model Task {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @default(now())
 
-  owner        User     @relation(fields: [ownerId], references: [id]) 
   ownerId      Int
+  owner        User     @relation(fields: [ownerId], references: [id]) 
 
-  taskType     TaskType @relation(fields: [taskTypeId], references: [id]) 
   taskTypeId   Int
+  taskType     TaskType @relation(fields: [taskTypeId], references: [id]) 
 }
