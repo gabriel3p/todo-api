@@ -1,5 +1,4 @@
-import { IsNotEmpty, IsOptional } from "class-validator";
-import { IsString } from "class-validator/types/decorator/typechecker/IsString";
+import { IsNotEmpty, IsOptional, IsString } from "class-validator";
 
 export class CreateTaskTypeDto {
     @IsString()

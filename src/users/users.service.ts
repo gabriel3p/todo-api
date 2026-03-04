@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/co
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { User } from './entities/user.entity';
+import { User } from 'generated/prisma/client';
 
 @Injectable()
 export class UsersService {
@@ -10,7 +10,7 @@ export class UsersService {
   constructor(private prismaService: PrismaService) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    const existentUser: User | null = await this.prismaService.user.findUnique({
+    const existentUser = await this.prismaService.user.findUnique({
       where: {
         email: createUserDto.email
       }
@@ -19,7 +19,7 @@ export class UsersService {
     if (existentUser)
       throw new UnauthorizedException('User with this email already exists');
 
-    const newUser: User = await this.prismaService.user.create({
+    const newUser = await this.prismaService.user.create({
       data: createUserDto
     });
 
@@ -32,7 +32,8 @@ export class UsersService {
 
   async findOne(id: number): Promise<User> {
     const user = await this.prismaService.user.findUnique({
-      where: { id }
+      where: { id },
+      include: { tasks: { include: { taskType: true } } }
     });
 
     if (!user)
@@ -43,28 +44,18 @@ export class UsersService {
   }
 
   async update(id: number, updateUserDto: UpdateUserDto): Promise<User | null> {
-    const user: User | null = await this.prismaService.user.findUnique({
-      where: { id }
-    });
-
-    if (!user)
-      throw new NotFoundException('User not found');
+    await this.findOne(id);
 
     await this.prismaService.user.update({
       where: { id },
       data: updateUserDto
     });
 
-    return this.prismaService.user.findUnique({ where: { id } });
+    return await this.findOne(id);
   }
 
   async remove(id: number): Promise<void> {
-    const user: User | null = await this.prismaService.user.findUnique({
-      where: { id }
-    });
-
-    if (!user)
-      throw new NotFoundException('User not found');
+    await this.findOne(id);
 
     await this.prismaService.user.delete({
       where: { id }

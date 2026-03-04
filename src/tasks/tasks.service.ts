@@ -1,49 +1,85 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
-import { Task } from './entities/task.entity';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { UsersService } from 'src/users/users.service';
+import { TaskTypesService } from 'src/task-types/task-types.service';
+import { Task } from 'generated/prisma/client';
 
 @Injectable()
 export class TasksService {
 
-  private taskList: Task[] = [];
 
-  create(createTaskDto: CreateTaskDto) {
-    const newTask: Task = {
-        title: createTaskDto.title,
-        createdAt: new Date(),
-        id: crypto.randomUUID(),
-        description: createTaskDto.description,
-        completed: createTaskDto.completed || false,
-    }
+  constructor(
+    private prismaService: PrismaService,
+    private userService: UsersService,
+    private taskTypesService: TaskTypesService
+  ) {}
 
-    this.taskList.push(newTask);
+  async create(createTaskDto: CreateTaskDto): Promise<Task> {
+    const user = await this.userService.findOne(createTaskDto.ownerId);
+    const taskType = await this.taskTypesService.findOne(createTaskDto.taskTypeId);
+
+    const task: Task = await this.prismaService.task.create({
+      data: {
+        ...createTaskDto,
+        ownerId: user.id,
+        taskTypeId: taskType.id
+      },
+      include: {
+        owner: true,
+        taskType: true
+      }
+    });
+
+    return task;
   }
 
-  findAll() {
-    return this.taskList;
+  async findAll(): Promise<Task[]> {
+    return await this.prismaService.task.findMany({
+      include: {
+        owner: true,
+        taskType: true
+      }
+    });
   }
 
-  findOne(id: string) {
-    const task= this.taskList.find(task => task.id == id);
+  async findOne(id: number): Promise<Task> {
+    const task = await this.prismaService.task.findUnique({
+      where: { id },
+      include: {
+        owner: true,
+        taskType: true
+      }
+    });
 
     if (!task)
-      throw new NotFoundException;
+      throw new NotFoundException(`Task with id ${id} not found`);
 
-    return task
+    return task;
   }
 
-  update(id: string, updateTaskDto: UpdateTaskDto) {
-    this.findOne(id);
 
-    const taskIndex = this.taskList.findIndex(task => task.id == id);
-    this.taskList[taskIndex] = { ...this.taskList[taskIndex], ...updateTaskDto }
+  async update(id: number, updateTaskDto: UpdateTaskDto): Promise<Task> {
+    await this.findOne(id);
+
+    await this.prismaService.task.update({
+      where: { id },
+      data: {
+        ...updateTaskDto,
+        updatedAt: new Date()
+      }
+    });
+
+    return await this.findOne(id);
+
   }
 
-  remove(id: string) {
-    this.findOne(id);
+  async remove(id: number) {
+    await this.findOne(id);
     
-    const taskIndex = this.taskList.findIndex(task => task.id == id);
-    this.taskList.splice(taskIndex, 1);
+    await this.prismaService.task.delete({
+      where: { id }
+    });
   }
 }
