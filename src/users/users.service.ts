@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -30,15 +30,44 @@ export class UsersService {
     return await this.prismaService.user.findMany({ include: { tasks: { include: { taskType: true } } } });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async findOne(id: number): Promise<User> {
+    const user = await this.prismaService.user.findUnique({
+      where: { id }
+    });
+
+    if (!user)
+      throw new NotFoundException('User not found');
+
+    return user;
+
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(id: number, updateUserDto: UpdateUserDto): Promise<User | null> {
+    const user: User | null = await this.prismaService.user.findUnique({
+      where: { id }
+    });
+
+    if (!user)
+      throw new NotFoundException('User not found');
+
+    await this.prismaService.user.update({
+      where: { id },
+      data: updateUserDto
+    });
+
+    return this.prismaService.user.findUnique({ where: { id } });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: number): Promise<void> {
+    const user: User | null = await this.prismaService.user.findUnique({
+      where: { id }
+    });
+
+    if (!user)
+      throw new NotFoundException('User not found');
+
+    await this.prismaService.user.delete({
+      where: { id }
+    });
   }
 }
